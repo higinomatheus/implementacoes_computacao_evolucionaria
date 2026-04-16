@@ -1,0 +1,106 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribuição / empacotamento
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.env/
+.envrc
+.venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Configurações de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs e arquivos temporários
+*.log
+*.tmp
+*.temp
+*.pid
+
+# Testes / cobertura
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de ambiente (sensíveis)
+.env
+.env.*
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Banco de dados local
+*.sqlite3
+*.db
+
+# Mypy / type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pytest
+.pytest_cache/
+
+# Ruff / linters
+.ruff_cache/
+
+# Dados (opcional - descomente se quiser ignorar datasets)
+# data/
+# datasets/
+
+# Arquivos grandes
+*.h5
+*.pkl
+*.joblib
+
+# Docker
+*.pid
+*.seed
+
+# Mac/Linux
+*.out
