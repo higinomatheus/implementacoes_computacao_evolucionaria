@@ -8,7 +8,7 @@ def decode_individuo(individuo):
     x_bin = individuo[:16]
     y_bin = individuo[16:]
 
-    x = bin_to_real(x_bin, -5, 5)
-    y = bin_to_real(y_bin, -5, 5)
+    x = bin_to_real(x_bin, -10, 10)
+    y = bin_to_real(y_bin, -10, 10)
 
     return x, y

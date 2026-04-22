@@ -3,5 +3,7 @@
   "generations": 100,
   "crossover_prob": 0.8,
   "mutation_prob": 0.01,
-  "selection": "torneio"
+  "selection": "torneio",
+  "function": "cross",
+  "elitism": true
 }

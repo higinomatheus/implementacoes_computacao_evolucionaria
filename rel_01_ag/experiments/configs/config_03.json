@@ -3,5 +3,7 @@
   "generations": 200,
   "crossover_prob": 1.0,
   "mutation_prob": 0.01,
-  "selection": "roleta"
+  "selection": "roleta",
+  "function": "cross",
+  "elitism": false
 }

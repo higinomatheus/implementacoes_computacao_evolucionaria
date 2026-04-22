@@ -23,6 +23,10 @@ def run():
             exec_results.append(res["melhor_fitness"])
 
         stats = calcular_estatisticas(exec_results)
+        
+        # Pode ser fixafo o population_size, generations. Pode alterar as configurações para diferentes crossover_prob, mutation_prob, selection e com ou sem elitismo (adicinar a propriedade elitismo)
+        
+        # Figuras em formato vetorial
 
         print(f"{file} -> {stats}")
 

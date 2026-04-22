@@ -1,7 +1,9 @@
 {
-  "population_size": 100,
+  "population_size": 50,
   "generations": 100,
   "crossover_prob": 0.8,
-  "mutation_prob": 0.05,
-  "selection": "torneio"
+  "mutation_prob": 0.01,
+  "selection": "torneio",
+  "function": "cross",
+  "elitism": false
 }
