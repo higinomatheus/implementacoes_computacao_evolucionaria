@@ -1,20 +1,46 @@
-import json
+import itertools
 import os
+import pandas as pd
+
 from src.algoritmo_genetico import algoritmo_genetico
 from utils.estatisticas import calcular_estatisticas
 from utils.graficos import plot_boxplot
 
-def run():
-    configs_path = "experiments/configs"
-    results = []
 
-    for file in os.listdir(configs_path):
-        with open(os.path.join(configs_path, file)) as f:
-            try:
-                config = json.load(f)
-            except Exception as e:
-                print(f"Erro ao ler {file}: {e}")
-                continue
+def run():
+    # =========================
+    # Parâmetros
+    # =========================
+    pcs = [0.6, 0.8, 1.0]
+    pms = [0.01, 0.05, 0.1]
+    selecoes = ["roleta", "torneio"]
+    pops = [20, 50, 100]
+    gens = [50, 100]
+    elitisms = [True, False]
+    funcoes = ["cross", "drop"]
+
+    combinacoes = list(itertools.product(
+        pcs, pms, selecoes, pops, gens, elitisms, funcoes
+    ))
+
+    print(f"Total de combinações: {len(combinacoes)}")
+
+    resumo_geral = []
+
+    # =========================
+    # Loop principal
+    # =========================
+    for i, (pc, pm, sel, pop, gen, elit, func) in enumerate(combinacoes):
+
+        config = {
+            "crossover_prob": pc,
+            "mutation_prob": pm,
+            "selection": sel,
+            "population_size": pop,
+            "generations": gen,
+            "elitism": elit,
+            "function": func
+        }
 
         exec_results = []
 
@@ -22,12 +48,41 @@ def run():
             res = algoritmo_genetico(config)
             exec_results.append(res["melhor_fitness"])
 
+        # =========================
+        # Estatísticas
+        # =========================
         stats = calcular_estatisticas(exec_results)
-        
-        # Pode ser fixafo o population_size, generations. Pode alterar as configurações para diferentes crossover_prob, mutation_prob, selection e com ou sem elitismo (adicinar a propriedade elitismo)
-        
-        # Figuras em formato vetorial
 
-        print(f"{file} -> {stats}")
+        # =========================
+        # Nome da configuração
+        # =========================
+        nome = f"{i}_pc{pc}_pm{pm}_{sel}_pop{pop}_gen{gen}_elit{elit}_{func}"
 
-        plot_boxplot(exec_results, f"results/boxplots/{file}.png")
+        print(f"[{i+1}/{len(combinacoes)}] {nome} -> {stats}")
+
+        # =========================
+        # Salvar CSV
+        # =========================
+        df = pd.DataFrame(exec_results, columns=["fitness"])
+        df.to_csv(f"results/dados_brutos/{nome}.csv", index=False)
+
+        # =========================
+        # Boxplot individual
+        # =========================
+        plot_boxplot(exec_results, f"results/boxplots/{nome}.png")
+
+        # =========================
+        # Resumo geral
+        # =========================
+        resumo_geral.append({
+            "config": nome,
+            **stats
+        })
+
+    # =========================
+    # Salvar resumo geral
+    # =========================
+    df_resumo = pd.DataFrame(resumo_geral)
+    df_resumo.to_csv("results/estatisticas/resumo_geral.csv", index=False)
+
+    print("\nExperimentos finalizados!")

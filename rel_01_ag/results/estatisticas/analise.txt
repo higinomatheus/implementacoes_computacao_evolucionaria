@@ -1,0 +1,29 @@
+
+## Análise dos Resultados
+
+A melhor configuração encontrada foi:
+
+404_pc1.0_pm0.1_roleta_pop100_gen100_elitTrue_cross
+
+Apresentando os seguintes resultados:
+- Média: 2.062612
+- Mediana: 2.062612
+- Máximo: 2.062612
+- Mínimo: 2.062611
+
+Observou-se que essa configuração proporcionou uma convergência mais estável,
+com baixa variabilidade entre execuções.
+
+Por outro lado, a pior configuração foi:
+
+145_pc0.8_pm0.01_roleta_pop20_gen50_elitTrue_drop
+
+Indicando que determinados parâmetros impactam negativamente o desempenho do algoritmo.
+
+De forma geral, observou-se que:
+
+- Taxas moderadas de mutação apresentaram melhor desempenho
+- O uso de elitismo contribuiu para maior estabilidade
+- O método de seleção por torneio apresentou convergência mais rápida
+- Funções multimodais como Cross-in-Tray apresentaram maior dificuldade de otimização
+

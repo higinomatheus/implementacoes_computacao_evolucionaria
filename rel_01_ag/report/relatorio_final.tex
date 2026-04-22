@@ -1,0 +1,180 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{hyperref}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+
+\includegraphics[width=0.22\textwidth]{ufla-logo.png} \\
+
+\vspace{0.8cm}
+
+{\large \textbf{UNIVERSIDADE FEDERAL DE LAVRAS}} \\
+
+\vspace{0.8cm}
+
+{\normalsize PROGRAMA DE PÓS-GRADUAÇÃO EM ENGENHARIA DE SISTEMAS E AUTOMAÇÃO} \\
+
+\vspace{1.5cm}
+
+{\LARGE \textbf{Implementação do Algoritmo Genético}} \\
+
+\vspace{4cm}
+
+{\large
+Matheus Higino \\
+Marcos Vinicius Cardoso Reis
+}
+
+\vspace{4cm}
+
+\begin{flushleft}
+\textbf{Disciplina:} Computação Evolucionária \\
+\textbf{Professor:} Dr. Bruno Henrique Groenner Barbosa (D.Sc.)
+\end{flushleft}
+
+\vfill
+
+{\large Abril de 2026}
+
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Introdução}
+
+Os Algoritmos Genéticos (AGs) são técnicas de otimização e busca inspiradas nos princípios da evolução natural, como seleção, cruzamento e mutação. Esses algoritmos fazem parte da área de Computação Evolucionária e têm sido amplamente utilizados na resolução de problemas complexos, especialmente aqueles em que métodos tradicionais apresentam dificuldades \cite{mitchell1998, goldberg1989}.
+
+De forma geral, um AG trabalha com uma população de soluções candidatas que evoluem ao longo de gerações, sendo avaliadas por uma função de avaliação, que determina a qualidade de cada indivíduo. As melhores soluções são selecionadas e combinadas por meio de operadores genéticos, com o objetivo de explorar o espaço de busca de maneira eficiente e aproximar-se de soluções ótimas \cite{goldberg1989}.
+
+Neste trabalho, foi implementado um Algoritmo Genético para resolver problemas de otimização envolvendo duas variáveis, utilizando representação binária e operadores genéticos clássicos, como seleção, cruzamento e mutação. A abordagem adotada busca demonstrar, na prática, o funcionamento e a eficácia dos AGs na resolução de problemas de otimização contínua.
+
+\section{Metodologia}
+
+\subsection{Representação}
+
+Cada indivíduo foi representado por um cromossomo binário de 32 bits, sendo:
+\begin{itemize}
+    \item 16 bits para a variável $x$
+    \item 16 bits para a variável $y$
+\end{itemize}
+
+Os valores foram convertidos para o intervalo $[-10, 10]$.
+
+\subsection{Funções Objetivo}
+
+Foram utilizadas duas funções multimodais:
+
+\subsubsection{Cross-in-Tray}
+
+\begin{equation}
+f(x,y) = -0.0001 \left( \left| \sin(x)\sin(y)\exp\left(\left|100 - \frac{\sqrt{x^2 + y^2}}{\pi}\right|\right) \right| + 1 \right)^{0.1}
+\end{equation}
+
+\subsubsection{Drop-Wave}
+
+\begin{equation}
+f(x,y) = -\frac{1 + \cos(12\sqrt{x^2 + y^2})}{0.5(x^2 + y^2) + 2}
+\end{equation}
+
+Ambas foram transformadas em problemas de maximização.
+
+\subsection{Operadores Genéticos}
+
+\begin{itemize}
+    \item Seleção: Roleta e Torneio
+    \item Cruzamento: 1 ponto por variável
+    \item Mutação: bit a bit
+    \item Elitismo: com e sem elitismo
+\end{itemize}
+
+\subsection{Configurações}
+
+Foram testadas combinações dos seguintes parâmetros:
+
+\begin{itemize}
+    \item Probabilidade de cruzamento: 0.6, 0.8, 1.0
+    \item Probabilidade de mutação: 0.01, 0.05, 0.1
+    \item Tamanho da população: 20, 50, 100
+    \item Número de gerações: 50, 100
+    \item Seleção: roleta e torneio
+    \item Elitismo: ativado e desativado
+\end{itemize}
+
+Cada configuração foi executada 30 vezes.
+
+\section{Resultados}
+
+A melhor configuração encontrada foi:
+
+\begin{itemize}
+    \item Probabilidade de cruzamento: 1.0
+    \item Probabilidade de mutação: 0.1
+    \item Seleção: roleta
+    \item População: 100
+    \item Gerações: 100
+    \item Elitismo: ativado
+\end{itemize}
+
+Essa configuração apresentou excelente desempenho, com valores de fitness próximos do ótimo global em todas as execuções.
+
+\subsection{Boxplot}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{comparativo_top5.png}
+\caption{Comparação das melhores configurações}
+\end{figure}
+
+\subsection{Convergência}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{convergencia_melhor.png}
+\caption{Evolução do fitness ao longo das gerações}
+\end{figure}
+
+\section{Análise dos Resultados}
+
+Observou-se que configurações com maior tamanho de população e maior número de gerações apresentaram melhor desempenho, devido ao aumento da diversidade genética e maior tempo de evolução.
+
+O uso de elitismo contribuiu significativamente para a estabilidade do algoritmo, garantindo que as melhores soluções fossem preservadas ao longo das gerações.
+
+Taxas de mutação mais elevadas favoreceram a exploração do espaço de busca, sendo especialmente importantes para funções multimodais.
+
+A seleção por roleta apresentou bom desempenho quando combinada com elitismo, enquanto o torneio mostrou convergência mais rápida em alguns cenários.
+
+A função Cross-in-Tray mostrou-se mais desafiadora devido à presença de múltiplos mínimos locais profundos, enquanto a função Drop-Wave apresentou convergência mais estável.
+
+\section{Conclusão}
+
+Os resultados obtidos demonstram que os Algoritmos Genéticos são ferramentas eficazes para a resolução de problemas de otimização, especialmente em cenários onde o espaço de busca é amplo ou apresenta características complexas. A abordagem baseada em população, aliada aos operadores genéticos de seleção, cruzamento e mutação, permite uma exploração global do espaço de soluções, reduzindo a probabilidade de estagnação em ótimos locais.
+
+Observou-se que o desempenho do algoritmo está diretamente relacionado à definição de seus componentes, como a representação cromossomial, a função de avaliação e os parâmetros associados aos operadores genéticos. Em especial, a função de avaliação mostrou-se fundamental por estabelecer a ligação entre o problema real e o processo evolutivo, influenciando diretamente a qualidade das soluções obtidas.
+
+Além disso, verificou-se a importância do equilíbrio entre exploração e intensificação no processo evolutivo. Enquanto o cruzamento promove a combinação de boas características, a mutação atua na introdução de diversidade genética, evitando a convergência prematura da população. Esse comportamento está alinhado com o caráter probabilístico dos AGs, que podem gerar diferentes soluções a cada execução.
+
+Por fim, conclui-se que, embora não garantam a obtenção da solução ótima global, os Algoritmos Genéticos constituem uma técnica robusta e flexível, sendo especialmente adequados para problemas em que métodos determinísticos tradicionais apresentam limitações. Dessa forma, os AGs se consolidam como uma importante ferramenta no contexto da Computação Evolucionária.
+
+\section{Repositório do Código}
+
+O código-fonte completo deste trabalho está disponível em:
+
+\begin{center}
+\url{https://github.com/higinomatheus/implementacoes_computacao_evolucionaria/tree/main/rel_01_ag}
+\end{center}
+
+\bibliographystyle{plain}
+\bibliography{referencias}
+
+\end{document}
