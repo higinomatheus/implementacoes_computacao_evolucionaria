@@ -45,16 +45,19 @@ def algoritmo_genetico(config):
             f2 = mutacao(f2, pm)
 
             nova_pop.extend([f1, f2])
-            
-            if elitismo:
-                # substitui o pior pelo melhor da geração anterior
-                fit_nova = [fitness(ind, fitness_type) for ind in nova_pop]
-                pior_idx = fit_nova.index(min(fit_nova))
-                nova_pop[pior_idx] = melhor_individuo
 
-        pop = nova_pop[:pop_size]
+        nova_pop = nova_pop[:pop_size]
 
-    fit = [fitness(ind) for ind in pop]
+        if elitismo:
+            # Após a nova população estar completa, substitui o pior
+            # indivíduo pelo melhor da geração anterior
+            fit_nova = [fitness(ind, fitness_type) for ind in nova_pop]
+            pior_idx = fit_nova.index(min(fit_nova))
+            nova_pop[pior_idx] = melhor_individuo
+
+        pop = nova_pop
+
+    fit = [fitness(ind, fitness_type) for ind in pop]
     melhor = max(fit)
 
     return {

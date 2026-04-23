@@ -3,20 +3,20 @@
 
 A melhor configuração encontrada foi:
 
-404_pc1.0_pm0.1_roleta_pop100_gen100_elitTrue_cross
+380_pc1.0_pm0.05_torneio_pop100_gen100_elitTrue_cross
 
 Apresentando os seguintes resultados:
 - Média: 2.062612
 - Mediana: 2.062612
 - Máximo: 2.062612
-- Mínimo: 2.062611
+- Mínimo: 2.062612
 
 Observou-se que essa configuração proporcionou uma convergência mais estável,
 com baixa variabilidade entre execuções.
 
 Por outro lado, a pior configuração foi:
 
-145_pc0.8_pm0.01_roleta_pop20_gen50_elitTrue_drop
+411_pc1.0_pm0.1_torneio_pop20_gen50_elitFalse_drop
 
 Indicando que determinados parâmetros impactam negativamente o desempenho do algoritmo.
 
