@@ -13,6 +13,56 @@
 \usepackage{longtable}
 \usepackage{caption}
 \usepackage[numbers]{natbib}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red!60!black},
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    tabsize=4,
+    captionpos=b
+}
+
+\lstset{
+    style=pythonstyle,
+    inputencoding=utf8,
+    extendedchars=true,
+    literate=
+        {á}{{\'a}}1
+        {à}{{\`a}}1
+        {ã}{{\~a}}1
+        {â}{{\^a}}1
+        {é}{{\'e}}1
+        {ê}{{\^e}}1
+        {í}{{\'i}}1
+        {ó}{{\'o}}1
+        {ô}{{\^o}}1
+        {õ}{{\~o}}1
+        {ú}{{\'u}}1
+        {ç}{{\c{c}}}1
+        {Á}{{\'A}}1
+        {À}{{\`A}}1
+        {Ã}{{\~A}}1
+        {Â}{{\^A}}1
+        {É}{{\'E}}1
+        {Ê}{{\^E}}1
+        {Í}{{\'I}}1
+        {Ó}{{\'O}}1
+        {Ô}{{\^O}}1
+        {Õ}{{\~O}}1
+        {Ú}{{\'U}}1
+        {Ç}{{\c{C}}}1
+}
 
 \geometry{margin=2.5cm}
 
@@ -22,6 +72,8 @@
     urlcolor=blue,
     citecolor=black
 }
+
+\renewcommand{\lstlistingname}{Código}
 
 \begin{document}
 
@@ -309,21 +361,562 @@ Os resultados indicaram que configurações com maior população, maior número
 Além de cumprir o objetivo da atividade, este trabalho também estabeleceu uma base reutilizável para experimentos futuros com outros algoritmos evolutivos, como PSO e ACO, ao longo da disciplina.
 
 %====================================================
-% REPOSITÓRIO
+% APÊNDICE
 %====================================================
 
-\section{Repositório do Código}
+\newpage
+\appendix
+\section{Apêndice -- Código-Fonte da Implementação}
 
-O código-fonte completo utilizado neste trabalho encontra-se disponível no repositório GitHub:
-
+Nesta seção é apresentado o código-fonte da implementação desenvolvida neste trabalho, organizado em uma ordem compatível com o fluxo de execução do projeto. O repositório completo também permanece disponível em:
 \begin{center}
 \url{https://github.com/higinomatheus/implementacoes_computacao_evolucionaria/tree/main/rel_01_ag}
 \end{center}
 
+\subsection{Arquivo principal: \texttt{main.py}}
+
+\begin{lstlisting}[caption={main.py}]
+from experiments.run_experiments import run
+
+if __name__ == "__main__":
+    run()
+\end{lstlisting}
+
+\newpage
+\subsection{Execução dos experimentos: \texttt{experiments/run\_experiments.py}}
+
+\begin{lstlisting}[caption={experiments/run\_experiments.py}]
+import itertools
+import os
+import pandas as pd
+
+from src.algoritmo_genetico import algoritmo_genetico
+from utils.estatisticas import calcular_estatisticas
+from utils.graficos import plot_boxplot
+
+
+def run():
+    # =========================
+    # Parâmetros
+    # =========================
+    pcs = [0.6, 0.8, 1.0]
+    pms = [0.01, 0.05, 0.1]
+    selecoes = ["roleta", "torneio"]
+    pops = [20, 50, 100]
+    gens = [50, 100]
+    elitisms = [True, False]
+    funcoes = ["cross", "drop"]
+
+    combinacoes = list(itertools.product(
+        pcs, pms, selecoes, pops, gens, elitisms, funcoes
+    ))
+
+    print(f"Total de combinações: {len(combinacoes)}")
+
+    resumo_geral = []
+
+    # =========================
+    # Loop principal
+    # =========================
+    for i, (pc, pm, sel, pop, gen, elit, func) in enumerate(combinacoes):
+
+        config = {
+            "crossover_prob": pc,
+            "mutation_prob": pm,
+            "selection": sel,
+            "population_size": pop,
+            "generations": gen,
+            "elitism": elit,
+            "function": func
+        }
+
+        exec_results = []
+
+        for _ in range(30):
+            res = algoritmo_genetico(config)
+            exec_results.append(res["melhor_fitness"])
+
+        # =========================
+        # Estatísticas
+        # =========================
+        stats = calcular_estatisticas(exec_results)
+
+        # =========================
+        # Nome da configuração
+        # =========================
+        nome = f"{i}_pc{pc}_pm{pm}_{sel}_pop{pop}_gen{gen}_elit{elit}_{func}"
+
+        print(f"[{i+1}/{len(combinacoes)}] {nome} -> {stats}")
+
+        # =========================
+        # Salvar CSV
+        # =========================
+        df = pd.DataFrame(exec_results, columns=["fitness"])
+        df.to_csv(f"results/dados_brutos/{nome}.csv", index=False)
+
+        # =========================
+        # Boxplot individual
+        # =========================
+        plot_boxplot(exec_results, f"results/boxplots/{nome}.png")
+
+        # =========================
+        # Resumo geral
+        # =========================
+        resumo_geral.append({
+            "config": nome,
+            **stats
+        })
+
+    # =========================
+    # Salvar resumo geral
+    # =========================
+    df_resumo = pd.DataFrame(resumo_geral)
+    df_resumo.to_csv("results/estatisticas/resumo_geral.csv", index=False)
+
+    print("\nExperimentos finalizados!")
+\end{lstlisting}
+
+\newpage
+\subsection{Algoritmo Genético: \texttt{src/algoritmo\_genetico.py}}
+
+\begin{lstlisting}[caption={src/algoritmo\_genetico.py}]
+from .populacao import gerar_populacao
+from .fitness import fitness
+from .selecao import roleta, torneio
+from .crossover import crossover
+from .mutacao import mutacao
+
+
+def algoritmo_genetico(config):
+    pop_size = config["population_size"]
+    generations = config["generations"]
+    pc = config["crossover_prob"]
+    pm = config["mutation_prob"]
+    selection_type = config["selection"]
+    fitness_type = config["function"]
+    elitismo = config.get("elitism", False)
+    
+    pop = gerar_populacao(pop_size)
+
+    melhores = []
+    medias = []
+
+    for _ in range(generations):
+        fit = [fitness(ind, fitness_type) for ind in pop]
+
+        best_idx = fit.index(max(fit))
+        melhor_individuo = pop[best_idx]
+        melhor_fitness = fit[best_idx]
+
+        melhores.append(max(fit))
+        medias.append(sum(fit) / len(fit))
+
+        nova_pop = []
+
+        while len(nova_pop) < pop_size:
+            if selection_type == "roleta":
+                p1 = roleta(pop, fit)
+                p2 = roleta(pop, fit)
+            else:
+                p1 = torneio(pop, fit)
+                p2 = torneio(pop, fit)
+
+            f1, f2 = crossover(p1, p2, pc)
+
+            f1 = mutacao(f1, pm)
+            f2 = mutacao(f2, pm)
+
+            nova_pop.extend([f1, f2])
+
+        nova_pop = nova_pop[:pop_size]
+
+        if elitismo:
+            fit_nova = [fitness(ind, fitness_type) for ind in nova_pop]
+            pior_idx = fit_nova.index(min(fit_nova))
+            nova_pop[pior_idx] = melhor_individuo
+
+        pop = nova_pop
+
+    fit = [fitness(ind, fitness_type) for ind in pop]
+    melhor = max(fit)
+
+    return {
+        "melhor_fitness": melhor,
+        "melhores": melhores,
+        "medias": medias
+    }
+\end{lstlisting}
+
+\subsection{População inicial: \texttt{src/populacao.py}}
+
+\begin{lstlisting}[caption={src/populacao.py}]
+import random
+
+def gerar_individuo():
+    return ''.join(random.choice(['0', '1']) for _ in range(32))
+
+
+def gerar_populacao(tamanho):
+    return [gerar_individuo() for _ in range(tamanho)]
+\end{lstlisting}
+
+\subsection{Representação cromossomial: \texttt{src/representacao.py}}
+
+\begin{lstlisting}[caption={src/representacao.py}]
+def bin_to_real(binary, min_val, max_val):
+    decimal = int(binary, 2)
+    max_decimal = 2**len(binary) - 1
+    return min_val + (decimal / max_decimal) * (max_val - min_val)
+
+
+def decode_individuo(individuo):
+    x_bin = individuo[:16]
+    y_bin = individuo[16:]
+
+    x = bin_to_real(x_bin, -10, 10)
+    y = bin_to_real(y_bin, -10, 10)
+
+    return x, y
+\end{lstlisting}
+
+\subsection{Avaliação e funções objetivo: \texttt{src/fitness.py}}
+
+\begin{lstlisting}[caption={src/fitness.py}]
+import math
+from .representacao import decode_individuo
+
+def cross_in_tray(x, y):
+    term1 = math.sin(x) * math.sin(y)
+    term2 = math.exp(abs(100 - (math.sqrt(x**2 + y**2) / math.pi)))
+    
+    result = -0.0001 * (abs(term1 * term2) + 1) ** 0.1
+    return result
+
+def drop_wave(x, y):
+    r = math.sqrt(x**2 + y**2)
+    
+    numerator = 1 + math.cos(12 * r)
+    denominator = 0.5 * (x**2 + y**2) + 2
+    
+    result = - numerator / denominator
+    return result
+
+def fitness(individuo, func="cross"):
+    x, y = decode_individuo(individuo)
+
+    if func == "cross":
+        return -cross_in_tray(x, y)
+    elif func == "drop":
+        return -drop_wave(x, y)
+\end{lstlisting}
+
+\newpage
+\subsection{Seleção: \texttt{src/selecao.py}}
+
+\begin{lstlisting}[caption={src/selecao.py}]
+import random
+
+def roleta(pop, fitness):
+    # Normalizar fitness para valores positivos
+    min_fit = min(fitness)
+    ajustado = [f - min_fit + 1e-6 for f in fitness]
+
+    total = sum(ajustado)
+    pick = random.uniform(0, total)
+
+    current = 0
+    for i, f in enumerate(ajustado):
+        current += f
+        if current > pick:
+            return pop[i]
+
+    # fallback (garantia)
+    return pop[-1]
+
+
+def torneio(pop, fitness, k=3):
+    selected = random.sample(list(zip(pop, fitness)), k)
+    selected.sort(key=lambda x: x[1], reverse=True)
+    return selected[0][0]
+\end{lstlisting}
+
+\newpage
+\subsection{Cruzamento: \texttt{src/crossover.py}}
+
+\begin{lstlisting}[caption={src/crossover.py}]
+import random
+
+def crossover(p1, p2, pc):
+    if random.random() > pc:
+        return p1, p2
+
+    cut_x = random.randint(1, 15)
+    cut_y = random.randint(17, 31)
+
+    child1 = (
+        p1[:cut_x] + p2[cut_x:16] +
+        p1[16:cut_y] + p2[cut_y:]
+    )
+
+    child2 = (
+        p2[:cut_x] + p1[cut_x:16] +
+        p2[16:cut_y] + p1[cut_y:]
+    )
+
+    return child1, child2
+\end{lstlisting}
+
+\subsection{Mutação: \texttt{src/mutacao.py}}
+
+\begin{lstlisting}[caption={src/mutacao.py}]
+import random
+
+def mutacao(individuo, pm):
+    novo = ""
+    for bit in individuo:
+        if random.random() < pm:
+            novo += '1' if bit == '0' else '0'
+        else:
+            novo += bit
+    return novo
+\end{lstlisting}
+
+\newpage
+\subsection{Estatísticas: \texttt{utils/estatisticas.py}}
+
+\begin{lstlisting}[caption={utils/estatisticas.py}]
+import numpy as np
+
+def calcular_estatisticas(resultados):
+    return {
+        "media": np.mean(resultados),
+        "mediana": np.median(resultados),
+        "max": np.max(resultados),
+        "min": np.min(resultados)
+    }
+\end{lstlisting}
+
+\subsection{Geração de gráficos: \texttt{utils/graficos.py}}
+
+\begin{lstlisting}[caption={utils/graficos.py}]
+import matplotlib.pyplot as plt
+
+def plot_convergencia(melhores, medias, path):
+    plt.plot(melhores, label="Melhor")
+    plt.plot(medias, label="Média")
+    plt.legend()
+    plt.savefig(path)
+    plt.close()
+
+
+def plot_boxplot(resultados, path):
+    plt.boxplot(resultados)
+    plt.savefig(path)
+    plt.close()
+\end{lstlisting}
+
+\newpage
+\subsection{Análise final: \texttt{experiments/analise\_final.py}}
+
+\begin{lstlisting}[caption={experiments/analise\_final.py}]
+import pandas as pd
+import matplotlib.pyplot as plt
+import json
+import os
+
+from src.algoritmo_genetico import algoritmo_genetico
+from utils.graficos import plot_convergencia
+
+
+def run_analysis():
+    df = pd.read_csv("results/estatisticas/resumo_geral.csv")
+
+    # =========================
+    # Ordenar (melhor = maior fitness)
+    # =========================
+    df_sorted = df.sort_values(by="media", ascending=False)
+
+    print("\nTop 10 configurações:")
+    print(df_sorted.head(10))
+
+    # salvar top 10
+    df_sorted.head(10).to_csv("results/estatisticas/top10.csv", index=False)
+
+    # =========================
+    # Melhor configuração
+    # =========================
+    best_config_name = df_sorted.iloc[0]["config"]
+    print(f"\nMelhor config: {best_config_name}")
+
+    # =========================
+    # Boxplot comparativo TOP 5
+    # =========================
+    top5 = df_sorted.head(5)
+
+    data = []
+    labels = []
+
+    for _, row in top5.iterrows():
+        nome = row["config"]
+        df_exec = pd.read_csv(f"results/dados_brutos/{nome}.csv")
+
+        data.append(df_exec["fitness"])
+        labels.append(nome[:20])
+
+    plt.figure()
+    plt.boxplot(data)
+    plt.xticks(range(1, len(labels)+1), labels, rotation=30)
+    plt.title("Top 5 Configurações")
+    plt.tight_layout()
+    plt.savefig("results/boxplots/comparativo_top5.png")
+    plt.close()
+
+    # =========================
+    # Rodar melhor config novamente (para gráfico)
+    # =========================
+    parts = best_config_name.split("_")
+
+    config = {
+        "crossover_prob": float(parts[1][2:]),
+        "mutation_prob": float(parts[2][2:]),
+        "selection": parts[3],
+        "population_size": int(parts[4][3:]),
+        "generations": int(parts[5][3:]),
+        "elitism": parts[6][4:] == "True",
+        "function": parts[7]
+    }
+
+    print("\nRodando melhor configuração para gráfico de convergência...")
+
+    res = algoritmo_genetico(config)
+
+    plot_convergencia(
+        res["melhores"],
+        res["medias"],
+        "results/graficos/convergencia_melhor.png"
+    )
+
+    gerar_texto_relatorio(df_sorted)
+
+
+def gerar_texto_relatorio(df_sorted):
+    melhor = df_sorted.iloc[0]
+    pior = df_sorted.iloc[-1]
+
+    texto = f"""
+## Análise dos Resultados
+
+A melhor configuração encontrada foi:
+
+{melhor['config']}
+
+Apresentando os seguintes resultados:
+- Média: {melhor['media']:.6f}
+- Mediana: {melhor['mediana']:.6f}
+- Máximo: {melhor['max']:.6f}
+- Mínimo: {melhor['min']:.6f}
+
+Observou-se que essa configuração proporcionou uma convergência mais estável,
+com baixa variabilidade entre execuções.
+
+Por outro lado, a pior configuração foi:
+
+{pior['config']}
+
+Indicando que determinados parâmetros impactam negativamente o desempenho do algoritmo.
+
+De forma geral, observou-se que:
+
+- Taxas moderadas de mutação apresentaram melhor desempenho
+- O uso de elitismo contribuiu para maior estabilidade
+- O método de seleção por torneio apresentou convergência mais rápida
+- Funções multimodais como Cross-in-Tray apresentaram maior dificuldade de otimização
+
+"""
+
+    with open("results/estatisticas/analise.txt", "w", encoding="utf-8") as f:
+        f.write(texto)
+
+    print("\nTexto de análise gerado em: results/estatisticas/analise.txt")
+
+
+if __name__ == "__main__":
+    run_analysis()
+\end{lstlisting}
+
+\newpage
+\subsection{Boxplots por parâmetro: \texttt{experiments/boxplots\_parametros.py}}
+
+\begin{lstlisting}[caption={experiments/boxplots\_parametros.py}]
+import os
+import pandas as pd
+import matplotlib.pyplot as plt
+
+RESUMO = "results/estatisticas/resumo_geral.csv"
+RAW_DIR = "results/dados_brutos"
+OUT_DIR = "results/boxplots"
+
+def extrair_parametros(nome):
+    parts = nome.split("_")
+    return {
+        "pc": parts[1][2:],
+        "pm": parts[2][2:],
+        "selecao": parts[3],
+        "populacao": parts[4][3:],
+        "geracoes": parts[5][3:],
+        "elitismo": parts[6][4:],
+        "funcao": parts[7]
+    }
+
+def carregar_todos():
+    resumo = pd.read_csv(RESUMO)
+    registros = []
+
+    for _, row in resumo.iterrows():
+        nome = row["config"]
+        caminho = os.path.join(RAW_DIR, f"{nome}.csv")
+        df = pd.read_csv(caminho)
+
+        params = extrair_parametros(nome)
+        for val in df["fitness"]:
+            registros.append({
+                "config": nome,
+                "fitness": val,
+                **params
+            })
+
+    return pd.DataFrame(registros)
+
+def gerar_boxplot(df, coluna, arquivo, titulo):
+    grupos = sorted(df[coluna].unique(), key=lambda x: str(x))
+    data = [df[df[coluna] == g]["fitness"] for g in grupos]
+
+    plt.figure(figsize=(8, 5))
+    plt.boxplot(data, labels=grupos)
+    plt.title(titulo)
+    plt.ylabel("Fitness")
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUT_DIR, arquivo))
+    plt.close()
+
+def main():
+    df = carregar_todos()
+
+    gerar_boxplot(df, "pc", "boxplot_pc.png", "Impacto da probabilidade de cruzamento")
+    gerar_boxplot(df, "pm", "boxplot_pm.png", "Impacto da probabilidade de mutação")
+    gerar_boxplot(df, "selecao", "boxplot_selecao.png", "Impacto do método de seleção")
+    gerar_boxplot(df, "populacao", "boxplot_populacao.png", "Impacto do tamanho da população")
+    gerar_boxplot(df, "geracoes", "boxplot_geracoes.png", "Impacto do número de gerações")
+    gerar_boxplot(df, "elitismo", "boxplot_elitismo.png", "Impacto do elitismo")
+
+if __name__ == "__main__":
+    main()
+\end{lstlisting}
+
 %====================================================
 % REFERÊNCIAS
 %====================================================
-
+\newpage
 \bibliographystyle{plainnat}
 \bibliography{referencias}
 
